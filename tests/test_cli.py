@@ -1,7 +1,10 @@
 """Тесты консольного интерфейса."""
 
+import sys
 import pytest
 from src.cli import MAX_TEXT_LENGTH, HELP_TEXT
+
+PYTHON = sys.executable
 
 
 class TestCLIConstants:
@@ -66,7 +69,7 @@ class TestCLIIntegration:
     def test_help_output(self):
         import subprocess
         result = subprocess.run(
-            ["python3", "main.py"],
+            [PYTHON, "main.py"],
             input="/help\n/exit\n",
             capture_output=True, text=True, timeout=30,
         )
@@ -77,7 +80,7 @@ class TestCLIIntegration:
     def test_exit_output(self):
         import subprocess
         result = subprocess.run(
-            ["python3", "main.py"],
+            [PYTHON, "main.py"],
             input="/exit\n",
             capture_output=True, text=True, timeout=30,
         )
@@ -86,7 +89,7 @@ class TestCLIIntegration:
     def test_empty_input_error(self):
         import subprocess
         result = subprocess.run(
-            ["python3", "main.py"],
+            [PYTHON, "main.py"],
             input="\n/exit\n",
             capture_output=True, text=True, timeout=30,
         )
@@ -97,7 +100,7 @@ class TestCLIIntegration:
         import subprocess
         long_text = "а" * 1001
         result = subprocess.run(
-            ["python3", "main.py"],
+            [PYTHON, "main.py"],
             input=f"{long_text}\n/exit\n",
             capture_output=True, text=True, timeout=30,
         )
@@ -107,7 +110,7 @@ class TestCLIIntegration:
     def test_unknown_command_error(self):
         import subprocess
         result = subprocess.run(
-            ["python3", "main.py"],
+            [PYTHON, "main.py"],
             input="/blabla\n/exit\n",
             capture_output=True, text=True, timeout=30,
         )
@@ -116,7 +119,7 @@ class TestCLIIntegration:
     def test_emotion_prediction_output(self):
         import subprocess
         result = subprocess.run(
-            ["python3", "main.py"],
+            [PYTHON, "main.py"],
             input="Я очень рада!\n/exit\n",
             capture_output=True, text=True, timeout=30,
         )
@@ -127,7 +130,7 @@ class TestCLIIntegration:
     def test_special_chars_no_crash(self):
         import subprocess
         result = subprocess.run(
-            ["python3", "main.py"],
+            [PYTHON, "main.py"],
             input="!@#$%^&*()\n/exit\n",
             capture_output=True, text=True, timeout=30,
         )
@@ -137,7 +140,7 @@ class TestCLIIntegration:
     def test_bert_flag_accepted(self):
         import subprocess
         result = subprocess.run(
-            ["python3", "main.py", "--bert"],
+            [PYTHON, "main.py", "--bert"],
             input="/exit\n",
             capture_output=True, text=True, timeout=60,
         )
