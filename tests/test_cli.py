@@ -1,10 +1,14 @@
 """Тесты консольного интерфейса."""
 
 import sys
+import os
+import subprocess
 import pytest
 from src.cli import MAX_TEXT_LENGTH, HELP_TEXT
 
 PYTHON = sys.executable
+# На Windows консоль cp1251 не поддерживает юникод-символы — форсируем UTF-8
+TEST_ENV = {**os.environ, "PYTHONIOENCODING": "utf-8"}
 
 
 class TestCLIConstants:
@@ -66,83 +70,50 @@ class TestCLIInputValidation:
 class TestCLIIntegration:
     """Интеграционные тесты CLI через subprocess."""
 
-    def test_help_output(self):
-        import subprocess
-        result = subprocess.run(
-            [PYTHON, "main.py"],
-            input="/help\n/exit\n",
-            capture_output=True, text=True, timeout=30,
+    def _run(self, args, input_text, timeout=30):
+        return subprocess.run(
+            args, input=input_text,
+            capture_output=True, text=True, timeout=timeout,
+            env=TEST_ENV,
         )
+
+    def test_help_output(self):
+        result = self._run([PYTHON, "main.py"], "/help\n/exit\n")
         assert "NLP-Emo-01" in result.stdout
         assert "/help" in result.stdout
         assert "/exit" in result.stdout
 
     def test_exit_output(self):
-        import subprocess
-        result = subprocess.run(
-            [PYTHON, "main.py"],
-            input="/exit\n",
-            capture_output=True, text=True, timeout=30,
-        )
+        result = self._run([PYTHON, "main.py"], "/exit\n")
         assert "До свидания" in result.stdout
 
     def test_empty_input_error(self):
-        import subprocess
-        result = subprocess.run(
-            [PYTHON, "main.py"],
-            input="\n/exit\n",
-            capture_output=True, text=True, timeout=30,
-        )
+        result = self._run([PYTHON, "main.py"], "\n/exit\n")
         assert "пустая строка" in result.stdout.lower() or \
                "Ошибка" in result.stdout
 
     def test_long_text_error(self):
-        import subprocess
         long_text = "а" * 1001
-        result = subprocess.run(
-            [PYTHON, "main.py"],
-            input=f"{long_text}\n/exit\n",
-            capture_output=True, text=True, timeout=30,
-        )
+        result = self._run([PYTHON, "main.py"], f"{long_text}\n/exit\n")
         assert "слишком длинный" in result.stdout or \
                "1001" in result.stdout
 
     def test_unknown_command_error(self):
-        import subprocess
-        result = subprocess.run(
-            [PYTHON, "main.py"],
-            input="/blabla\n/exit\n",
-            capture_output=True, text=True, timeout=30,
-        )
+        result = self._run([PYTHON, "main.py"], "/blabla\n/exit\n")
         assert "Неизвестная команда" in result.stdout
 
     def test_emotion_prediction_output(self):
-        import subprocess
-        result = subprocess.run(
-            [PYTHON, "main.py"],
-            input="Я очень рада!\n/exit\n",
-            capture_output=True, text=True, timeout=30,
-        )
+        result = self._run([PYTHON, "main.py"], "Я очень рада!\n/exit\n")
         assert "Эмоция:" in result.stdout
         assert "Уверенность:" in result.stdout
         assert "%" in result.stdout
 
     def test_special_chars_no_crash(self):
-        import subprocess
-        result = subprocess.run(
-            [PYTHON, "main.py"],
-            input="!@#$%^&*()\n/exit\n",
-            capture_output=True, text=True, timeout=30,
-        )
+        result = self._run([PYTHON, "main.py"], "!@#$%^&*()\n/exit\n")
         assert result.returncode == 0
         assert "Эмоция:" in result.stdout
 
     def test_bert_flag_accepted(self):
-        import subprocess
-        result = subprocess.run(
-            [PYTHON, "main.py", "--bert"],
-            input="/exit\n",
-            capture_output=True, text=True, timeout=60,
-        )
+        result = self._run([PYTHON, "main.py", "--bert"], "/exit\n", timeout=60)
         assert result.returncode == 0
         assert "BERT" in result.stdout or "До свидания" in result.stdout
