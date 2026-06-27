@@ -74,7 +74,7 @@ class TestCLIIntegration:
         return subprocess.run(
             args, input=input_text,
             capture_output=True, text=True, timeout=timeout,
-            env=TEST_ENV,
+            env=TEST_ENV, encoding="utf-8",
         )
 
     def test_help_output(self):
