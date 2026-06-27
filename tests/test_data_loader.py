@@ -32,7 +32,7 @@ class TestLoadData:
         assert len(df_train) > 0
 
     def test_text_is_string(self, df_train):
-        assert df_train["text"].dtype == object
+        assert df_train["text"].dtype == object or "string" in str(df_train["text"].dtype).lower()
 
     def test_labels_are_binary(self, df_train):
         for col in EMOTION_COLUMNS:
